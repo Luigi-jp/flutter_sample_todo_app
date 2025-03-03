@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:sample_todo_app/model/todo.dart';
 
@@ -24,11 +24,11 @@ class TodoViewState {
   }
 }
 
-class TodoViewModel extends ValueNotifier<TodoViewState> {
+class TodoViewModel extends StateNotifier<TodoViewState> {
   TodoViewModel(this._model)
     : super(TodoViewState(todos: [], showCompleted: true)) {
       _model.todoStream.listen((todos) {
-        value = value.copyWith(todos: todos);
+        state = state.copyWith(todos: todos);
       });
 
       _model.refreshTodos();
@@ -45,6 +45,6 @@ class TodoViewModel extends ValueNotifier<TodoViewState> {
   }
 
   void toggleShowCompleted() {
-    value = value.copyWith(showCompleted: !value.showCompleted);
+    state = state.copyWith(showCompleted: !state.showCompleted);
   }
 }

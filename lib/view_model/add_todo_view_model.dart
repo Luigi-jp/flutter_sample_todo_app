@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:sample_todo_app/model/member_model.dart';
 import 'package:sample_todo_app/model/todo.dart';
@@ -44,7 +45,7 @@ class AddTodoViewState {
   String get formattedDeadline => DateFormat('yyyy/MM/dd HH:mm').format(deadline);
 }
 
-class AddTodoViewModel extends ValueNotifier<AddTodoViewState> {
+class AddTodoViewModel extends StateNotifier<AddTodoViewState> {
   AddTodoViewModel(this._todoModel, this._memberModel)
     : super(AddTodoViewState(
       title: '',
@@ -58,19 +59,19 @@ class AddTodoViewModel extends ValueNotifier<AddTodoViewState> {
   final MemberModel _memberModel;
 
   void updateTitle(String title) {
-    value = value.copyWith(title: title);
+    state = state.copyWith(title: title);
   }
 
   void updateAssignee(Member member) {
-    value = value.copyWith(assignee: member);
+    state = state.copyWith(assignee: member);
   }
 
   void updateEstimatedHours(double hours) {
-    value = value.copyWith(estimatedHours: hours);
+    state = state.copyWith(estimatedHours: hours);
   }
 
   void updateDeadline(DateTime deadline) {
-    value = value.copyWith(deadline: deadline);
+    state = state.copyWith(deadline: deadline);
   }
 
   bool save() {
@@ -78,17 +79,17 @@ class AddTodoViewModel extends ValueNotifier<AddTodoViewState> {
 
     try {
       _todoModel.addTodo(
-        title: value.title,
-        assignee: value.assignee, 
-        estimatedHours: value.estimatedHours,
-        deadline: value.deadline,
+        title: state.title,
+        assignee: state.assignee, 
+        estimatedHours: state.estimatedHours,
+        deadline: state.deadline,
       );
       return true;
     } on DeadlineRestrictionException catch (e) {
-      value = value.copyWith(errorMessage: e.message);
+      state = state.copyWith(errorMessage: e.message);
       return false;
     }
   }
 
-  bool get isValid => value.title.trim().isNotEmpty;
+  bool get isValid => state.title.trim().isNotEmpty;
 }

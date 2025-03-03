@@ -1,7 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:sample_todo_app/model/member.dart';
 import 'package:sample_todo_app/model/member_model.dart';
+
 class MemberListViewState {
   MemberListViewState({
     required this.members,
@@ -10,11 +11,11 @@ class MemberListViewState {
   final List<Member> members;
 }
 
-class MemberListViewModel extends ValueNotifier<MemberListViewState> {
+class MemberListViewModel extends StateNotifier<MemberListViewState> {
   MemberListViewModel(this._model)
     : super(MemberListViewState(members: [])) {
       _model.memberStream.listen((members) {
-        value = MemberListViewState(members: members);
+        state = MemberListViewState(members: members);
       });
 
       _model.getAllMembers();

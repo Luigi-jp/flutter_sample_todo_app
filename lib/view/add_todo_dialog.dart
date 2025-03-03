@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:sample_todo_app/model_provider.dart';
+import 'package:sample_todo_app/providers/app_providers.dart';
 import 'package:sample_todo_app/view/member_select_filed.dart';
-import 'package:sample_todo_app/view_model/add_todo_view_model.dart';
 
-class AddTodoDialog extends StatefulWidget {
+class AddTodoDialog extends ConsumerWidget {
   const AddTodoDialog({super.key});
 
   static Future<void> show(BuildContext context) async {
@@ -14,32 +14,11 @@ class AddTodoDialog extends StatefulWidget {
     );
   }
 
-  @override
-  State<AddTodoDialog> createState() => _AddTodoDialogState();
-}
-
-class _AddTodoDialogState extends State<AddTodoDialog> {
-  late final AddTodoViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = AddTodoViewModel(
-      ModelProvider.todoModelOf(context),
-      ModelProvider.memberModelOf(context),
-    );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _viewModel.dispose();
-  }
-
-  Future<void> _showDatePicker(BuildContext context) async {
+  Future<void> _showDatePicker(BuildContext context, WidgetRef ref) async {
+    final viewState = ref.watch(addTodoViewModelProvider);
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _viewModel.value.deadline,
+      initialDate: viewState.deadline,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
@@ -48,7 +27,7 @@ class _AddTodoDialogState extends State<AddTodoDialog> {
       if (context.mounted) {
         final pickedTime = await showTimePicker(
           context: context,
-          initialTime: TimeOfDay.fromDateTime(_viewModel.value.deadline),
+          initialTime: TimeOfDay.fromDateTime(viewState.deadline),
         );
 
         if (pickedTime != null) {
@@ -60,112 +39,109 @@ class _AddTodoDialogState extends State<AddTodoDialog> {
             pickedTime.minute,
           );
 
-          _viewModel.updateDeadline(pickedDateTime);
+          ref.read(addTodoViewModelProvider.notifier).updateDeadline(pickedDateTime);
         }
       }
     }
   }
-  
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final _viewState = ref.watch(addTodoViewModelProvider);
+
     return Dialog(
-      child: ValueListenableBuilder<AddTodoViewState>(
-        valueListenable: _viewModel,
-        builder: (context, state, _) {
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Add New Todo',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),              
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
+                Text(
+                  'Add New Todo',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),              
                 ),
-                SizedBox(height: 16),
-                TextField(              
-                  style: TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.task_alt),
-                    hintText: 'Enter new todo',
+                IconButton(
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
                   ),
-                  onChanged: _viewModel.updateTitle,
-                ),
-                SizedBox(height: 16),
-                MemberSelectField(
-                  label: 'Assignee',
-                  members: state.availableMembers,
-                  selectedMember: state.assignee,
-                  onChanged: _viewModel.updateAssignee,
-                ),
-                SizedBox(height: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Estimated Hours: ${state.estimatedHours}',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    Slider(
-                      value: state.estimatedHours,
-                      min: 0.5,
-                      max: 8.0,
-                      divisions: 15,
-                      label: '${state.estimatedHours}',
-                      onChanged: _viewModel.updateEstimatedHours,
-                    ),
-                    OutlinedButton.icon(
-                      icon: Icon(Icons.calendar_today),
-                      label: Text('Deadline: ${state.formattedDeadline}'),
-                      onPressed: () => _showDatePicker(context),
-                    ),
-                    if (state.errorMessage != null) ... [
-                      const SizedBox(height: 8),
-                      Text(
-                        state.errorMessage!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ],              
-                ),
-                SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _viewModel.isValid 
-                      ? () {
-                        if (_viewModel.save()) {
-                          Navigator.of(context).pop();
-                        }
-                      }
-                      : null,
-                    child: Text('Add Todo'),
-                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                 ),
               ],
             ),
-          );
-        }
+            SizedBox(height: 16),
+            TextField(              
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.task_alt),
+                hintText: 'Enter new todo',
+              ),
+              onChanged: ref.read(addTodoViewModelProvider.notifier).updateTitle,
+            ),
+            SizedBox(height: 16),
+            MemberSelectField(
+              label: 'Assignee',
+              members: _viewState.availableMembers,
+              selectedMember: _viewState.assignee,
+              onChanged: ref.read(addTodoViewModelProvider.notifier).updateAssignee,
+            ),
+            SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estimated Hours: ${_viewState.estimatedHours}',
+                  style: TextStyle(color: Colors.white),
+                ),
+                Slider(
+                  value: _viewState.estimatedHours,
+                  min: 0.5,
+                  max: 8.0,
+                  divisions: 15,
+                  label: '${_viewState.estimatedHours}',
+                  onChanged: ref.read(addTodoViewModelProvider.notifier).updateEstimatedHours,
+                ),
+                OutlinedButton.icon(
+                  icon: Icon(Icons.calendar_today),
+                  label: Text('Deadline: ${_viewState.formattedDeadline}'),
+                  onPressed: () => _showDatePicker(context, ref),
+                ),
+                if (_viewState.errorMessage != null) ... [
+                  const SizedBox(height: 8),
+                  Text(
+                    _viewState.errorMessage!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ],              
+            ),
+            SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: ref.read(addTodoViewModelProvider.notifier).isValid 
+                  ? () {
+                    if (ref.read(addTodoViewModelProvider.notifier).save()) {
+                      Navigator.of(context).pop();
+                    }
+                  }
+                  : null,
+                child: Text('Add Todo'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

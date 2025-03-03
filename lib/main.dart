@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:sample_todo_app/model_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:sample_todo_app/model_provider.dart';
 import 'package:sample_todo_app/view/todo_screen.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    ProviderScope(
+      child: const MainApp()
+    )
+  );
 }
 
 class MainApp extends StatelessWidget {

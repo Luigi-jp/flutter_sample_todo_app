@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:sample_todo_app/model/member.dart';
 import 'package:sample_todo_app/model/member_model.dart';
@@ -43,7 +43,7 @@ class EditTodoViewState {
   String get formattedDeadline => DateFormat('yyyy/MM/dd HH:mm').format(deadline);
 }
 
-class EditTodoViewModel extends ValueNotifier<EditTodoViewState> {
+class EditTodoViewModel extends StateNotifier<EditTodoViewState> {
   EditTodoViewModel(this._todoModel, this._memberModel, Todo todo)
     : _id = todo.id,
       super(EditTodoViewState(
@@ -59,19 +59,19 @@ class EditTodoViewModel extends ValueNotifier<EditTodoViewState> {
   final String _id;
 
   void updateTitle(String title) {
-    value = value.copyWith(title: title);
+    state = state.copyWith(title: title);
   }
 
   void updateAssignee(Member assignee) {
-    value = value.copyWith(assignee: assignee);
+    state = state.copyWith(assignee: assignee);
   }
 
   void updateEstimatedHours(double estimatedHours) {
-    value = value.copyWith(estimatedHours: estimatedHours);
+    state = state.copyWith(estimatedHours: estimatedHours);
   }
 
   void updateDeadline(DateTime deadline) {
-    value = value.copyWith(deadline: deadline);
+    state = state.copyWith(deadline: deadline);
   }
 
   bool save() {
@@ -80,17 +80,17 @@ class EditTodoViewModel extends ValueNotifier<EditTodoViewState> {
     try {
       _todoModel.updateTodo(
         id: _id,
-        title: value.title,
-        estimatedHours: value.estimatedHours,
-        deadline: value.deadline,
-        assignee: value.assignee,
+        title: state.title,
+        estimatedHours: state.estimatedHours,
+        deadline: state.deadline,
+        assignee: state.assignee,
       );
       return true;
     } on DeadlineRestrictionException catch (e) {
-      value = value.copyWith(errorMessage: e.message);
+      state = state.copyWith(errorMessage: e.message);
       return false;
     }
   }
 
-  bool get isValid => value.title.trim().isNotEmpty;
+  bool get isValid => state.title.trim().isNotEmpty;
 }

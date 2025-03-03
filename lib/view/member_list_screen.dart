@@ -1,32 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:sample_todo_app/model_provider.dart';
-import 'package:sample_todo_app/view_model/member_list_view_model.dart';
+import 'package:sample_todo_app/providers/app_providers.dart';
 import 'package:sample_todo_app/model/member.dart';
 
-class MemberListScreen extends StatefulWidget {
+class MemberListScreen extends ConsumerWidget {
   const MemberListScreen({super.key});
-
-  @override
-  State<MemberListScreen> createState() => _MemberListScreenState();
-}
-
-class _MemberListScreenState extends State<MemberListScreen> {
-  late final MemberListViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = MemberListViewModel(
-      ModelProvider.memberModelOf(context),
-    );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _viewModel.dispose();
-  }
 
   IconData _getIconData(IconType iconType) {
     switch (iconType) {
@@ -44,7 +23,8 @@ class _MemberListScreenState extends State<MemberListScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewState = ref.watch(memberListViewModelProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -57,33 +37,28 @@ class _MemberListScreenState extends State<MemberListScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          ValueListenableBuilder<MemberListViewState>(
-            valueListenable: _viewModel,
-            builder: (context, state, _) {
-              return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final member = state.members[index];
-                      return Card(
-                        child: ListTile(
-                          leading: Icon(
-                            _getIconData(member.icon),
-                            color: Colors.tealAccent[400],
-                          ),
-                          title: Text(
-                            member.name,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),                    
-                      );
-                    },
-                    childCount: state.members.length,
-                  ),
-                ),
-              );
-            }
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final member = viewState.members[index];
+                  return Card(
+                    child: ListTile(
+                      leading: Icon(
+                        _getIconData(member.icon),
+                        color: Colors.tealAccent[400],
+                      ),
+                      title: Text(
+                        member.name,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),                    
+                  );
+                },
+                childCount: viewState.members.length,
+              ),
+            ),
           ),
         ],
       ),
